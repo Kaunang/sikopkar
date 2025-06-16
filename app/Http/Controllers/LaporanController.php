@@ -17,15 +17,15 @@ use Illuminate\Support\Str;
 
 class LaporanController extends Controller
 {
-    // Define constants for interest rate
-    const INTEREST_RATE = 0.0125; // 1.25%
+
+    const INTEREST_RATE = 0.0125; 
 
     public function index()
     {
         return view('laporan.index');
     }
 
-    ## Laporan Anggota (Members Report)
+    ## Laporan Anggota 
 
     public function anggota(Request $request)
     {
@@ -64,7 +64,7 @@ class LaporanController extends Controller
         return $query->orderBy('tanggal_daftar', 'desc')->get();
     }
 
-    ## Laporan Pinjaman (Loans Report)
+    ## Laporan Pinjaman 
 
     public function pinjaman(Request $request)
     {
@@ -107,7 +107,7 @@ class LaporanController extends Controller
         return $query->orderBy('tanggal_pinjaman', 'desc')->get();
     }
 
-    ## **Laporan Simpanan (Savings Report)**
+    ## **Laporan Simpanan **
 
     public function simpanan(Request $request)
     {
@@ -134,17 +134,14 @@ class LaporanController extends Controller
         return view('laporan.simpanan', compact('anggotaWithSimpanan'));
     }
 
-    // Fungsi untuk menampilkan detail simpanan spesifik seorang anggota
     public function detailSimpananAnggota($id)
     {
         $anggota = Anggota::with(['simpanan' => function($query) {
-            $query->orderBy('tanggal', 'asc'); // Urutkan simpanan berdasarkan tanggal
+            $query->orderBy('tanggal', 'asc'); 
         }])->findOrFail($id);
-        // PERBAIKAN DI SINI: Ubah nama view agar sesuai dengan nama file Blade Anda
         return view('laporan.simpanan_detail', compact('anggota'));
     }
 
-    // Fungsi baru untuk mengunduh laporan simpanan per anggota dalam format PDF
     public function unduhSimpananAnggotaPdf($id)
     {
         $anggota = Anggota::with(['simpanan' => function($query) {
@@ -154,7 +151,6 @@ class LaporanController extends Controller
         return $pdf->download('laporan_simpanan_' . Str::slug($anggota->nama) . '.pdf');
     }
 
-    // Fungsi baru untuk mengunduh laporan simpanan per anggota dalam format Excel
     public function unduhSimpananAnggotaExcel($id)
     {
         $anggota = Anggota::with(['simpanan' => function($query) {
@@ -163,21 +159,18 @@ class LaporanController extends Controller
         return Excel::download(new SimpananAnggotaExport($anggota), 'laporan_simpanan_' . Str::slug($anggota->nama) . '.xlsx');
     }
 
-    // Fungsi ini bisa tetap ada jika Anda ingin opsi ekspor "semua simpanan" tanpa pengelompokan per anggota
     public function exportSimpananPdf(Request $request)
     {
         $simpanan = $this->filterSimpanan($request);
         $pdf = PDF::loadView('laporan.simpanan_pdf', compact('simpanan'));
-        return $pdf->download('laporan_simpanan_all.pdf'); // Ubah nama file agar tidak bentrok
+        return $pdf->download('laporan_simpanan_all.pdf'); 
     }
 
-    // Fungsi ini bisa tetap ada jika Anda ingin opsi ekspor "semua simpanan" tanpa pengelompokan per anggota
     public function exportSimpananExcel(Request $request)
     {
-        return Excel::download(new SimpananExport($request), 'laporan_simpanan_all.xlsx'); // Ubah nama file agar tidak bentrok
+        return Excel::download(new SimpananExport($request), 'laporan_simpanan_all.xlsx'); 
     }
 
-    // FilterSimpanan ini masih berguna untuk exportSimpananPdf/Excel yang global
     private function filterSimpanan(Request $request)
     {
         $query = Simpanan::with('anggota');
@@ -205,13 +198,13 @@ class LaporanController extends Controller
         return $query->latest()->get();
     }
 
-    // Laporan Pendapatan Bunga (Interest Income Report)
+    // Laporan Pendapatan Bunga 
 
     public function pendapatanBunga(Request $request)
     {
         $pinjamans = Pinjaman::with('anggota')
-            ->when($request->filled('tanggal_awal') && $request->filled('tanggal_akhir'), function ($query) use ($request) {
-                $query->whereBetween('tanggal_pinjaman', [$request->tanggal_awal, $request->tanggal_akhir]);
+            ->when($request->filled('tanggal_dari') && $request->filled('tanggal_sampai'), function ($query) use ($request) {
+                $query->whereBetween('tanggal_pinjaman', [$request->tanggal_dari, $request->tanggal_sampai]);
             })
             ->orderBy('tanggal_pinjaman', 'desc')
             ->get();
@@ -243,7 +236,7 @@ class LaporanController extends Controller
     private function getFilteredLoansForInterest(Request $request)
     {
         $query = Pinjaman::with(['anggota', 'angsuran'])
-            ->whereHas('angsuran'); // only loans that have installments
+            ->whereHas('angsuran'); 
 
         if ($request->filled('nama')) {
             $query->whereHas('anggota', function ($subQuery) use ($request) {
